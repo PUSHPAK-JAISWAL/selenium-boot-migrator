@@ -7,17 +7,20 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.FileVisitResult;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 final class BuildFileAnalyzer {
 
+    private static final Set<String> IGNORED_DIRECTORIES = Set.of("target", "build", ".gradle", "node_modules");
     private static final Pattern GRADLE_DEPENDENCY = Pattern.compile(
             "(?m)^\\s*(implementation|api|compileOnly|runtimeOnly|testImplementation|testCompileOnly|"
                     + "testRuntimeOnly|classpath|annotationProcessor|kapt)\\s*(?:\\(\\s*)?['\\\"]([^'\\\"]+)['\\\"]");
@@ -27,19 +30,17 @@ final class BuildFileAnalyzer {
     static List<String> detect(Path root) throws IOException {
         List<String> detected = new ArrayList<>();
         Set<String> dependencies = new LinkedHashSet<>();
-        List<Path> buildFiles;
-        try (Stream<Path> paths = Files.walk(root)) {
-            buildFiles = paths.filter(Files::isRegularFile)
-                    .filter(path -> isBuildFile(path.getFileName().toString()))
-                    .sorted()
-                    .toList();
-        }
+        List<Path> buildFiles = findBuildFiles(root);
 
         for (Path buildFile : buildFiles) {
             String name = buildFile.getFileName().toString();
             if (name.equals("pom.xml")) {
-                detected.add("Build system: Maven");
-                dependencies.addAll(mavenDependencies(buildFile));
+                try {
+                    dependencies.addAll(mavenDependencies(buildFile));
+                    detected.add("Build system: Maven");
+                } catch (IOException exception) {
+                    detected.add("Build system: Maven (could not parse pom.xml)");
+                }
             } else if (name.equals("build.gradle")) {
                 detected.add("Build system: Gradle (Groovy DSL)");
                 dependencies.addAll(gradleDependencies(buildFile));
@@ -51,6 +52,29 @@ final class BuildFileAnalyzer {
 
         dependencies.stream().sorted().map(dependency -> "Dependency: " + dependency).forEach(detected::add);
         return List.copyOf(detected);
+    }
+
+    private static List<Path> findBuildFiles(Path root) throws IOException {
+        List<Path> buildFiles = new ArrayList<>();
+        Files.walkFileTree(root, new SimpleFileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) {
+                if (!directory.equals(root) && IGNORED_DIRECTORIES.contains(directory.getFileName().toString())) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                if (attributes.isRegularFile() && isBuildFile(file.getFileName().toString())) {
+                    buildFiles.add(file);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+        buildFiles.sort(Path::compareTo);
+        return buildFiles;
     }
 
     private static boolean isBuildFile(String name) {
