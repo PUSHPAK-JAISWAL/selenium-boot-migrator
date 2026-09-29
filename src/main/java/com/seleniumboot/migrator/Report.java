@@ -89,6 +89,11 @@ public record Report(int filesFound, int filesParsed, List<String> unparsable, L
         return sb.toString();
     }
 
+    public String toJson() {
+        return JsonRenderer.render(this);
+    }
+
+
     private static String ruleLabel(String ruleId) {
         return switch (ruleId) {
             case "MIG-010" -> "MIG-010 (Page objects)";
