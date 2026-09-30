@@ -54,8 +54,10 @@ as text; a Gradle installation is not required.
 | Exit Code | Description |
 |---|---|
 | `0` | Success: command completed normally and estimated confidence meets `--fail-under` (if specified). |
-| `1` | Threshold failure: estimated confidence is strictly below the `--fail-under` percentage. |
+| `1` | Quality gate failed: estimated confidence is strictly below the `--fail-under` percentage. |
 | `2` | Usage or input error: invalid arguments, unsupported format, invalid threshold, missing directory, or directory not found. |
+| `3` | Runtime error: analysis or migration failed due to an I/O error or unexpected runtime failure. |
+
 
 ## Machine-Readable Output (JSON)
 
@@ -157,7 +159,7 @@ The output adheres to the following stable schema:
           "ruleId": { "type": "string", "description": "Migration rule ID (e.g. MIG-001)." },
           "status": { "type": "string", "enum": ["AUTO", "MANUAL"], "description": "Mapping status." },
           "file": { "type": "string", "description": "Normalized relative file path." },
-          "line": { "type": "integer", "minimum": 1, "description": "1-based line number of finding." },
+          "line": { "type": "integer", "minimum": 0, "description": "1-based line number of finding, or 0 if position is unavailable." },
           "detected": { "type": "string", "description": "Code snippet or construct detected." },
           "advice": { "type": "string", "description": "Suggested migration action." }
         }

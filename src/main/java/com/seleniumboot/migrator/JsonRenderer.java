@@ -2,7 +2,7 @@ package com.seleniumboot.migrator;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+
 
 final class JsonRenderer {
 
@@ -30,16 +30,14 @@ final class JsonRenderer {
         appendNumberMap(sb, report.locatorCounts(), "  ");
         sb.append(",\n");
 
-        Map<String, Long> byRule = new TreeMap<>();
-        report.findings().forEach(f -> byRule.merge(f.ruleId(), 1L, Long::sum));
-
         sb.append("  \"summary\": {\n");
         sb.append("    \"mapsCleanly\": ").append(report.count(Finding.Status.AUTO)).append(",\n");
         sb.append("    \"manualReviewRequired\": ").append(report.count(Finding.Status.MANUAL)).append(",\n");
         sb.append("    \"unparsableFiles\": ").append(report.unparsable().size()).append(",\n");
         sb.append("    \"byRule\": ");
-        appendNumberMap(sb, byRule, "    ");
+        appendNumberMap(sb, report.ruleCounts(), "    ");
         sb.append("\n  },\n");
+
 
         sb.append("  \"estimatedConfidence\": ").append(report.estimatedConfidence()).append(",\n");
 

@@ -6,32 +6,43 @@ import java.nio.file.Path;
 
 public final class Cli {
 
-    public static void main(String[] args) throws Exception {
-        int exitCode = run(args, System.out, System.err);
+    public static void main(String[] args) {
+        int exitCode;
+        try {
+            exitCode = run(args, System.out, System.err);
+        } catch (Throwable throwable) {
+            System.err.println("runtime error: " + (throwable.getMessage() != null ? throwable.getMessage() : throwable.toString()));
+            exitCode = 3;
+        }
         if (exitCode != 0) {
             System.exit(exitCode);
         }
     }
 
-    public static int run(String[] args, PrintStream out, PrintStream err) throws Exception {
-        if (args.length == 0) {
-            printUsage(err);
-            return 2;
-        }
+    public static int run(String[] args, PrintStream out, PrintStream err) {
+        try {
+            if (args.length == 0) {
+                printUsage(err);
+                return 2;
+            }
 
-        String command = args[0];
-        if (command.equals("analyze")) {
-            return runAnalyze(args, out, err);
-        } else if (command.equals("migrate")) {
-            return runMigrate(args, out, err);
-        } else {
-            err.println("unknown command: " + command);
-            printUsage(err);
-            return 2;
+            String command = args[0];
+            if (command.equals("analyze")) {
+                return runAnalyze(args, out, err);
+            } else if (command.equals("migrate")) {
+                return runMigrate(args, out, err);
+            } else {
+                err.println("unknown command: " + command);
+                printUsage(err);
+                return 2;
+            }
+        } catch (Throwable throwable) {
+            err.println("runtime error: " + (throwable.getMessage() != null ? throwable.getMessage() : throwable.toString()));
+            return 3;
         }
     }
 
-    private static int runAnalyze(String[] args, PrintStream out, PrintStream err) throws Exception {
+    private static int runAnalyze(String[] args, PrintStream out, PrintStream err) {
         Path dir = null;
         String format = "text";
         Integer failUnder = null;
@@ -94,7 +105,14 @@ public final class Cli {
             return 2;
         }
 
-        Report report = new Analyzer().analyze(dir);
+        Report report;
+        try {
+            report = new Analyzer().analyze(dir);
+        } catch (Exception exception) {
+            err.println("analysis failed: " + (exception.getMessage() != null ? exception.getMessage() : exception.toString()));
+            return 3;
+        }
+
         if (format.equalsIgnoreCase("json")) {
             out.print(report.toJson());
         } else {
@@ -122,7 +140,7 @@ public final class Cli {
         }
     }
 
-    private static int runMigrate(String[] args, PrintStream out, PrintStream err) throws Exception {
+    private static int runMigrate(String[] args, PrintStream out, PrintStream err) {
         Path projectDir = null;
         Path outputDir = null;
 
@@ -169,6 +187,9 @@ public final class Cli {
         } catch (IllegalArgumentException exception) {
             err.println(exception.getMessage());
             return 2;
+        } catch (Exception exception) {
+            err.println("migration failed: " + (exception.getMessage() != null ? exception.getMessage() : exception.toString()));
+            return 3;
         }
     }
 

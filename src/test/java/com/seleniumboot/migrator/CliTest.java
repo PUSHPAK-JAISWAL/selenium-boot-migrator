@@ -20,7 +20,7 @@ class CliTest {
 
     private record RunResult(int exitCode, String out, String err) { }
 
-    private static RunResult runCli(String... args) throws Exception {
+    private static RunResult runCli(String... args) {
         ByteArrayOutputStream outBytes = new ByteArrayOutputStream();
         ByteArrayOutputStream errBytes = new ByteArrayOutputStream();
         try (PrintStream out = new PrintStream(outBytes, true, StandardCharsets.UTF_8);
@@ -126,14 +126,14 @@ class CliTest {
     }
 
     @Test
-    void returnsExitCodeTwoOnEmptyArguments() throws Exception {
+    void returnsExitCodeTwoOnEmptyArguments() {
         RunResult result = runCli();
         assertEquals(2, result.exitCode());
         assertTrue(result.err().contains("usage:"));
     }
 
     @Test
-    void returnsExitCodeTwoOnUnknownCommand() throws Exception {
+    void returnsExitCodeTwoOnUnknownCommand() {
         RunResult result = runCli("unknown-command");
         assertEquals(2, result.exitCode());
         assertTrue(result.err().contains("unknown command: unknown-command"));
@@ -141,7 +141,7 @@ class CliTest {
     }
 
     @Test
-    void returnsExitCodeTwoOnMissingDirectory() throws Exception {
+    void returnsExitCodeTwoOnMissingDirectory() {
         RunResult result = runCli("analyze");
         assertEquals(2, result.exitCode());
         assertTrue(result.err().contains("missing project directory"));
@@ -149,7 +149,7 @@ class CliTest {
     }
 
     @Test
-    void returnsExitCodeTwoOnNonExistentDirectory() throws Exception {
+    void returnsExitCodeTwoOnNonExistentDirectory() {
         RunResult result = runCli("analyze", "this-directory-does-not-exist-12345");
         assertEquals(2, result.exitCode());
         assertTrue(result.err().contains("not a directory:"));
@@ -201,6 +201,16 @@ class CliTest {
     }
 
     @Test
+    void returnsExitCodeThreeOnRuntimeError(@TempDir Path temp) throws Exception {
+        Path file = Files.writeString(temp.resolve("file.txt"), "hello");
+        Path invalidOutput = file.resolve("child");
+
+        RunResult result = runCli("migrate", fixture("maven").toString(), "--out", invalidOutput.toString());
+        assertEquals(3, result.exitCode());
+        assertTrue(result.err().contains("migration failed:"));
+    }
+
+    @Test
     void processExitCodes(@TempDir Path temp) throws Exception {
         Files.writeString(temp.resolve("Wait.java"), """
                 class Wait {
@@ -220,7 +230,7 @@ class CliTest {
                 .start();
         assertEquals(0, passProcess.waitFor());
 
-        // Fail-under violation process: exit code 1
+        // Quality gate failure process: exit code 1
         Process failProcess = new ProcessBuilder(java, "-cp", classpath,
                 "com.seleniumboot.migrator.Cli", "analyze", temp.toString(), "--fail-under", "90")
                 .start();
@@ -231,5 +241,13 @@ class CliTest {
                 "com.seleniumboot.migrator.Cli", "analyze", temp.toString(), "--format", "invalid")
                 .start();
         assertEquals(2, errorProcess.waitFor());
+
+        // Runtime error process: exit code 3
+        Path blockingFile = Files.writeString(temp.resolve("blocking-file.txt"), "hello");
+        Path invalidOutput = blockingFile.resolve("child");
+        Process runtimeErrorProcess = new ProcessBuilder(java, "-cp", classpath,
+                "com.seleniumboot.migrator.Cli", "migrate", fixture("maven").toString(), "--out", invalidOutput.toString())
+                .start();
+        assertEquals(3, runtimeErrorProcess.waitFor());
     }
 }

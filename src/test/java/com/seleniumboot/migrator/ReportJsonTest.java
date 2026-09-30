@@ -88,4 +88,39 @@ class ReportJsonTest {
         assertTrue(json.contains("\\nline2\\t\\\"quoted\\\"\\\\backslash"));
         assertTrue(json.contains("advice\\r\\n\\b\\f"));
     }
+
+    @Test
+    void rendersLineZeroWhenPositionUnavailable() {
+        Report report = new Report(
+                1,
+                1,
+                List.of(),
+                List.of(
+                        new Finding("MIG-015", Finding.Status.MANUAL, "Driver.java", 0,
+                                "CustomDriverManager", "Review and replace with BaseTest.")
+                )
+        );
+
+        String json = report.toJson();
+        assertTrue(json.contains("\"line\": 0"), "Line 0 should be rendered validly when position is unavailable");
+    }
+
+    @Test
+    void ruleCountsProvidesSharedAggregation() {
+        Report report = new Report(
+                1,
+                1,
+                List.of(),
+                List.of(
+                        new Finding("MIG-001", Finding.Status.AUTO, "A.java", 1, "d", "a"),
+                        new Finding("MIG-001", Finding.Status.AUTO, "B.java", 2, "d", "a"),
+                        new Finding("MIG-003", Finding.Status.MANUAL, "C.java", 3, "d", "a")
+                )
+        );
+
+        Map<String, Long> counts = report.ruleCounts();
+        assertEquals(2L, counts.get("MIG-001"));
+        assertEquals(1L, counts.get("MIG-003"));
+        assertEquals(2, counts.size());
+    }
 }
