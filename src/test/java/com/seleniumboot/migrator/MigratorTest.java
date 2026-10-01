@@ -164,8 +164,8 @@ class MigratorTest {
         assertEquals(MigrationReport.render(result.remaining()), migrationReport);
         assertTrue(migrationReport.contains("MIG-017"));
         assertTrue(migrationReport.contains("Caller.java"));
-        assertFalse(migrationReport.contains("### `src/main/java/fixture/DriverFactory.java`"));
-        assertFalse(migrationReport.contains("### `src/main/java/fixture/RetryAnalyzer.java`"));
+        assertFalse(migrationReport.contains("MIG-004"));
+        assertFalse(migrationReport.contains("MIG-001"));
     }
 
     @Test
