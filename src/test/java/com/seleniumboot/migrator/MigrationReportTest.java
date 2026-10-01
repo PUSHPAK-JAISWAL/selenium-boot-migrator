@@ -19,7 +19,50 @@ class MigrationReportTest {
 
         String expected = Files.readString(
                 Path.of("src/test/resources/migration-report.md")
-        );
+        ).replace("\r\n", "\n");
+
+        assertEquals(expected, MigrationReport.render(report));
+    }
+
+    @Test
+    void rendersReportWithZeroFindings() {
+        var report = new Report(0, 0, List.of(), List.of());
+
+        String expected = """
+                # Selenium Boot Migration Report
+
+                ## Summary
+
+                - Files found: 0
+                - Files parsed: 0
+                - Automatic findings: 0
+                - Manual findings: 0
+                - Unparsable files: 0
+
+                ## Detected technologies
+
+                - No supported build descriptor found
+
+                ## Recognized technologies
+
+                - No supported test technologies detected
+
+                ## Rules applied per file
+
+                - No migration rules detected
+
+                ## Warnings
+
+                - None
+
+                ## Manual actions
+
+                - None
+
+                ## Estimated migration confidence
+
+                100% estimated migration confidence. This is an estimate, not a guarantee.
+                """;
 
         assertEquals(expected, MigrationReport.render(report));
     }

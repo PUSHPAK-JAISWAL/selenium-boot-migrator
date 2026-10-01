@@ -82,6 +82,7 @@ class MigratorTest {
 
         assertTrue(Files.isRegularFile(output.resolve("MIGRATION_REPORT.md")));
         String migrationReport = Files.readString(output.resolve("MIGRATION_REPORT.md"));
+        assertEquals(MigrationReport.render(result.remaining()), migrationReport);
         assertTrue(migrationReport.contains("# Selenium Boot Migration Report"));
         assertTrue(migrationReport.contains("## Rules applied per file"));
         assertTrue(migrationReport.contains("Estimated migration confidence"));
@@ -157,7 +158,15 @@ class MigratorTest {
                 && finding.file().endsWith("Caller.java"))
             .count());
         assertTrue(Files.readString(output.resolve("pom.xml")).contains("<version>3.5.0</version>"));
-        }
+
+        assertTrue(Files.isRegularFile(output.resolve("MIGRATION_REPORT.md")));
+        String migrationReport = Files.readString(output.resolve("MIGRATION_REPORT.md"));
+        assertEquals(MigrationReport.render(result.remaining()), migrationReport);
+        assertTrue(migrationReport.contains("MIG-017"));
+        assertTrue(migrationReport.contains("Caller.java"));
+        assertFalse(migrationReport.contains("### `src/main/java/fixture/DriverFactory.java`"));
+        assertFalse(migrationReport.contains("### `src/main/java/fixture/RetryAnalyzer.java`"));
+    }
 
     @Test
     void refusesToWriteIntoSourceOrOverwriteExistingOutput() throws Exception {

@@ -59,7 +59,7 @@ final class MigrationReport {
                 .append('\n'));
 
         if (findingsByFile.isEmpty()) {
-            output.append("- No migration rules detected\n");
+            output.append("- No migration rules detected\n\n");
         } else {
             findingsByFile.forEach((file, findings) -> output
                     .append("### `")
