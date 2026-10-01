@@ -1,8 +1,10 @@
 package com.seleniumboot.migrator;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 
 public record Report(int filesFound, int filesParsed, List<String> unparsable, List<Finding> findings,
                      List<String> detectedTechnologies, List<String> recognizedTechnologies,
@@ -72,9 +74,7 @@ public record Report(int filesFound, int filesParsed, List<String> unparsable, L
             locatorCounts.forEach((locator, count) ->
                     sb.append(String.format("  %-22s %d%n", locator + ":", count)));
         }
-        Map<String, Long> byRule = new TreeMap<>();
-        findings.forEach(f -> byRule.merge(f.ruleId(), 1L, Long::sum));
-        byRule.forEach((r, n) -> sb.append(String.format("%-40s %d%n", ruleLabel(r) + ":", n)));
+        ruleCounts().forEach((r, n) -> sb.append(String.format("%-40s %d%n", ruleLabel(r) + ":", n)));
         sb.append(String.format("%nMaps cleanly:             %d%n", count(Finding.Status.AUTO)));
         sb.append(String.format("Manual review required:   %d%n", count(Finding.Status.MANUAL)));
         sb.append(String.format("Unparsable files:         %d%n", unparsable.size()));
@@ -88,6 +88,18 @@ public record Report(int filesFound, int filesParsed, List<String> unparsable, L
         unparsable.forEach(u -> sb.append("  [unparsable] ").append(u).append('\n'));
         return sb.toString();
     }
+
+    public Map<String, Long> ruleCounts() {
+        Map<String, Long> byRule = new TreeMap<>();
+        findings.forEach(f -> byRule.merge(f.ruleId(), 1L, Long::sum));
+        return Collections.unmodifiableMap(byRule);
+    }
+
+
+    public String toJson() {
+        return JsonRenderer.render(this);
+    }
+
 
     private static String ruleLabel(String ruleId) {
         return switch (ruleId) {
