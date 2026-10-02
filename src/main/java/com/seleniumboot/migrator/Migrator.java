@@ -114,7 +114,7 @@ public final class Migrator {
         Set<String> unparsable = new LinkedHashSet<>(source.unparsable());
         unparsable.addAll(output.unparsable());
         return new Report(output.filesFound(), output.filesParsed(), List.copyOf(unparsable), List.copyOf(findings),
-                source.detectedTechnologies(), source.recognizedTechnologies(), source.locatorCounts());
+                output.detectedTechnologies(), output.recognizedTechnologies(), output.locatorCounts());
     }
 
     private static void copyProject(Path source, Path destination) throws IOException {
