@@ -222,7 +222,8 @@ class MigratorTest {
         assertFalse(gradle.contains("org.seleniumhq.selenium:selenium-java"));
 
         assertTrue(result.applied().contains("build.gradle: replaced selenium-java with io.github.seleniumboot:selenium-boot:3.5.0"));
-        assertTrue(result.remaining().detectedTechnologies().contains("Dependency: io.github.seleniumboot:selenium-boot:3.5.0"));
+        assertTrue(result.remaining().detectedTechnologies().contains("Dependency: org.seleniumhq.selenium:selenium-java:4.21.0"));
+        assertFalse(result.remaining().detectedTechnologies().contains("Dependency: io.github.seleniumboot:selenium-boot:3.5.0"));
         assertTrue(result.remaining().detectedTechnologies().contains("Dependency: org.testng:testng:7.10.2"));
         assertTrue(result.remaining().detectedTechnologies().contains("Build system: Gradle (Groovy DSL)"));
     }
@@ -254,7 +255,8 @@ class MigratorTest {
         assertFalse(gradleKts.contains("org.seleniumhq.selenium:selenium-java"));
 
         assertTrue(result.applied().contains("build.gradle.kts: replaced selenium-java with io.github.seleniumboot:selenium-boot:3.5.0"));
-        assertTrue(result.remaining().detectedTechnologies().contains("Dependency: io.github.seleniumboot:selenium-boot:3.5.0"));
+        assertTrue(result.remaining().detectedTechnologies().contains("Dependency: org.seleniumhq.selenium:selenium-java:4.21.0"));
+        assertFalse(result.remaining().detectedTechnologies().contains("Dependency: io.github.seleniumboot:selenium-boot:3.5.0"));
         assertTrue(result.remaining().detectedTechnologies().contains("Dependency: org.junit.jupiter:junit-jupiter:5.10.2"));
         assertTrue(result.remaining().detectedTechnologies().contains("Build system: Gradle (Kotlin DSL)"));
     }
