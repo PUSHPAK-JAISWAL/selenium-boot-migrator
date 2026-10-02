@@ -75,8 +75,9 @@ public final class Migrator {
             applied.add("pom.xml: replaced selenium-java with io.github.seleniumboot:selenium-boot:" + SELENIUM_BOOT_VERSION);
         }
         Report outputAnalysis = new Analyzer().analyze(destination);
-        return new Result(destination, List.copyOf(applied), List.copyOf(notes),
-                includeSourceManualFindings(sourceAnalysis, outputAnalysis, danglingReferences));
+        Report remaining = includeSourceManualFindings(sourceAnalysis, outputAnalysis, danglingReferences);
+        MigrationReport.write(destination, remaining);
+        return new Result(destination, List.copyOf(applied), List.copyOf(notes), remaining);
     }
 
     private static Report includeSourceManualFindings(Report source, Report output, List<Finding> additionalFindings) {
@@ -86,7 +87,8 @@ public final class Migrator {
         additionalFindings.stream().filter(finding -> !findings.contains(finding)).forEach(findings::add);
         Set<String> unparsable = new LinkedHashSet<>(source.unparsable());
         unparsable.addAll(output.unparsable());
-        return new Report(output.filesFound(), output.filesParsed(), List.copyOf(unparsable), List.copyOf(findings));
+        return new Report(output.filesFound(), output.filesParsed(), List.copyOf(unparsable), List.copyOf(findings),
+                source.detectedTechnologies(), source.recognizedTechnologies(), source.locatorCounts());
     }
 
     private static void copyProject(Path source, Path destination) throws IOException {
